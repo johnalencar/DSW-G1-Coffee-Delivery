@@ -2,9 +2,9 @@ import { Coffee, Package, ShoppingCart, Timer } from '@phosphor-icons/react'
 import { useTheme } from 'styled-components'
 
 import { CoffeeCard } from '../../components/CoffeeCard'
-
+import axios from 'axios'
 import { CoffeeList, Heading, Hero, HeroContent, Info } from './styles'
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Coffee {
   id: string;
@@ -19,19 +19,42 @@ interface Coffee {
 export function Home() {
   const theme = useTheme();
 
+  const [coffees, setCoffees] = useState<Coffee[]>([])
+
+
+  const apiCoffees = async () => {
+    try {
+      const response = await axios.get<Coffee[]>('http://localhost:3000/coffees')
+      setCoffees(response.data) 
+    } catch (error) {
+      console.error('Erro ao buscar cafés:', error)
+    }
+  }
+
   useEffect(() => {
-    // request para a API para pegar os cafés
-    // e setar no estado
+    apiCoffees() 
   }, []);
 
 
   
   function incrementQuantity(id: string) {
     // Aqui você pode fazer a lógica para incrementar a quantidade do café
+    setCoffees((prevCoffees) =>
+      prevCoffees.map((coffee) =>
+        coffee.id === id ? { ...coffee, quantity: coffee.quantity + 1 } : coffee
+      )
+    )
   }
 
   function decrementQuantity(id: string) {
     // Aqui você pode fazer a lógica para decrementar a quantidade do café
+    setCoffees((prevCoffees) =>
+      prevCoffees.map((coffee) =>
+        coffee.id === id && coffee.quantity > 0
+          ? { ...coffee, quantity: coffee.quantity - 1 }
+          : coffee
+      )
+    )
   }
 
   return (
@@ -100,22 +123,23 @@ export function Home() {
       <CoffeeList>
         <h2>Nossos cafés</h2>
 
-        <div>
-        {[1,2,3].map((coffee) => (
-            <CoffeeCard key={coffee} coffee={{
-              description: 'Café expresso tradicional com espuma cremosa',
-              id: '1',
-              image: "/images/coffees/expresso-cremoso.png",
-              price: 9.90,
-              tags: ['Tradicional', 'Comum'],
-              title: 'Expresso Tradicional',
-              quantity: 1,
+      <div>
+        {coffees.map((coffees) => (
+            <CoffeeCard key={coffees.id} coffee={{
+              description: coffees.description,
+              id: coffees.id,
+              image: coffees.image,
+              price: coffees.price,
+              tags: coffees.tags,
+              title: coffees.title,
+              quantity: coffees.quantity,
             }}
             incrementQuantity={incrementQuantity}
             decrementQuantity={decrementQuantity}
             />
           ))}
         </div>
+
       </CoffeeList>
     </div>
   )
